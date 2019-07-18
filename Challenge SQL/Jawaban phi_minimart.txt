@@ -1,0 +1,40 @@
+==================== SOAL NO 1 ====================
+SELECT
+	`tgl_berlaku`,
+	`tanggal_sebelumnya`,
+	`kode_cabang`,
+	`kode_produk`,
+	`harga_hari_ini`,
+	`harga_sebelumnya`,
+	((`harga_hari_ini` - `harga_sebelumnya`) / `harga_sebelumnya`) * 100  AS `persen_kenaikan`
+FROM (
+	SELECT
+		`tgl_berlaku`,
+		(SELECT
+			`tgl_berlaku` 
+			FROM `ms_harga_harian`
+			WHERE `tgl_berlaku` < `x`.`tgl_berlaku` AND `kode_produk` = `x`.`kode_produk` AND `kode_cabang` = `x`.`kode_cabang`
+			ORDER BY `tgl_berlaku` DESC
+			LIMIT 1) AS `tanggal_sebelumnya`,
+		`kode_cabang`,
+		`kode_produk`,
+		`harga_berlaku_cabang` AS `harga_hari_ini`,
+		(SELECT
+			`harga_berlaku_cabang` 
+			FROM `ms_harga_harian`
+			WHERE `tgl_berlaku` < `x`.`tgl_berlaku` AND `kode_produk` = `x`.`kode_produk` AND `kode_cabang` = `x`.`kode_cabang`
+			ORDER BY `tgl_berlaku` DESC
+			LIMIT 1) AS `harga_sebelumnya`
+	FROM `ms_harga_harian` `x`
+) `xx`
+WHERE  ((`harga_hari_ini` - `harga_sebelumnya`) / `harga_sebelumnya`) * 100 < 0
+
+==================== SOAL NO 2 ====================
+SELECT 
+		DATE(`tgl_transaksi`) AS `tgl_transaksi`,
+		`kode_cabang`,
+		SUM(CASE WHEN `kode_produk` = 'PROD-0000040' THEN jumlah_pembelian ELSE NULL END) AS `total_salak`,
+		SUM(CASE WHEN `kode_produk` = 'PROD-0000012' THEN jumlah_pembelian ELSE NULL END) AS `total_wortel`
+FROM `tr_penjualan`
+WHERE `kode_produk` IN ('PROD-0000012', 'PROD-0000040')
+GROUP BY `tgl_transaksi`, `kode_cabang`
